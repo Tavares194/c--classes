@@ -1,0 +1,209 @@
+using AV2.Database;
+using AV2.Models;
+using Microsoft.Data.Sqlite;
+namespace AV2.Repositories;
+class PedidoRepository
+{
+    private readonly DatabaseConfig _databaseConfig;
+    public PedidoRepository(DatabaseConfig databaseConfig)
+    {
+        _databaseConfig = databaseConfig;
+    }
+
+    public List<Pedido> Listar()
+    {
+        var Pedidos = new List<Pedido>();
+
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT * FROM Pedido";
+
+        var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            var CodPedido = reader.GetInt32(0);
+            var PrazoEntrega = reader.GetDateTime(1);
+            var DataPedido = reader.GetDateTime(2);
+            var PedidoCodCliente = reader.GetInt32(3);
+            var PedidoCodVendedor = reader.GetInt32(4);
+            var Pedido = ReaderToPedidos(reader);
+            Pedidos.Add(Pedido);
+        }
+
+        connection.Close();
+
+        return Pedidos;
+    }
+
+    public Pedido Inserir(Pedido pedido)
+    {
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "INSERT INTO Pedido VALUES($CodPedido, $PrazoEntrega, $DataPedido, $PedidoCodCliente, $PedidoCodVendedor)";
+        command.Parameters.AddWithValue("$CodPedido", pedido.CodPedido);
+        command.Parameters.AddWithValue("$PrazoEntrega", pedido.PrazoEntrega);
+        command.Parameters.AddWithValue("$DataPedido", pedido.DataPedido);
+        command.Parameters.AddWithValue("$PedidoCodCliente", pedido.PedidoCodCliente);
+        command.Parameters.AddWithValue("$PedidoCodVendedor", pedido.PedidoCodVendedor);
+
+        command.ExecuteNonQuery();
+        connection.Close();
+
+        return pedido;
+    }
+
+    public bool Apresentar(int CodPedido)
+    {
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT count(CodPedido) FROM Pedido WHERE (CodPedido = $CodPedido)";
+        command.Parameters.AddWithValue("$CodPedido", CodPedido);
+
+        var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetBoolean(0);
+
+        return result;
+    }
+
+    public bool MostrarPedidosCliente(int CodCliente)
+    {
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT count(pedidocodcliente) FROM Pedido WHERE (pedidocodcliente = $codcliente)";
+        command.Parameters.AddWithValue("$codcliente", CodCliente);
+
+        var reader = command.ExecuteReader();
+        reader.Read();
+        var result = false;
+
+        if (reader.GetInt32(0) > 0)
+        {
+            result = true;
+        }
+        else
+        {
+            result = false;
+        }
+        return result;
+    }
+
+    public bool MostrarPedidosVendedor(int CodVendedor)
+    {
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT count(pedidocodvendedor) FROM Pedido WHERE (pedidocodvendedor = $codvendedor)";
+        command.Parameters.AddWithValue("$codvendedor", CodVendedor);
+
+        var reader = command.ExecuteReader();
+        reader.Read();
+        var result = false;
+
+        if (reader.GetInt32(0) > 0)
+        {
+            result = true;
+        }
+        else
+        {
+            result = false;
+        }
+        return result;
+    }
+
+    public Pedido GetById(int CodPedido)
+    {
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT * FROM Pedido WHERE (CodPedido = $CodPedido)";
+        command.Parameters.AddWithValue("$CodPedido", CodPedido);
+
+        var reader = command.ExecuteReader();
+        reader.Read();
+
+        var pedido = ReaderToPedidos(reader);
+
+        connection.Close();
+
+        return pedido;
+    }
+
+    public List<Pedido> GetByClienteId(int CodCliente)
+    {
+        var pedidos = new List<Pedido>();
+
+
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT * FROM Pedido WHERE(pedidocodcliente = $codcliente)";
+        command.Parameters.AddWithValue("$codcliente", CodCliente);
+
+        var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            var pedidoid = reader.GetInt32(0);
+            var prazoentrega = reader.GetDateTime(1);
+            var datapedido = reader.GetDateTime(2);
+            var pedidoclienteid = reader.GetInt32(3);
+            var pedidovendedorid = reader.GetInt32(4);
+            var pedido = ReaderToPedidos(reader);
+            pedidos.Add(pedido);
+        }
+
+        connection.Close();
+
+        return pedidos;
+    }
+
+    public List<Pedido> GetByVendedorId(int CodVendedor)
+    {
+        var pedidos = new List<Pedido>();
+
+
+        var connection = new SqliteConnection(_databaseConfig.ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT * FROM Pedido WHERE(pedidocodvendedor = $codvendedor)";
+        command.Parameters.AddWithValue("$codvendedor", CodVendedor);
+
+        var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            var pedidoid = reader.GetInt32(0);
+            var prazoentrega = reader.GetDateTime(1);
+            var datapedido = reader.GetDateTime(2);
+            var pedidoclienteid = reader.GetInt32(3);
+            var pedidovendedorid = reader.GetInt32(4);
+            var pedido = ReaderToPedidos(reader);
+            pedidos.Add(pedido);
+        }
+
+        connection.Close();
+
+        return pedidos;
+    }
+
+    private Pedido ReaderToPedidos(SqliteDataReader reader)
+    {
+        var Pedido = new Pedido(reader.GetInt32(0), reader.GetDateTime(1), reader.GetDateTime(2), reader.GetInt32(3), reader.GetInt32(4));
+
+        return Pedido;
+    }
+}
